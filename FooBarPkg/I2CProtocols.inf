@@ -1,0 +1,53 @@
+## @file
+
+#Protocol Viewer:
+
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = I2CProtocols
+  FILE_GUID                      = 92e7ac00-49bc-47dd-9790-f1dec616981d
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 0.1
+  ENTRY_POINT                    = ShellCEntryLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  I2CProtocols.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  ShellCEntryLib
+  UefiBootServicesTableLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  UefiRuntimeServicesTableLib
+  UefiLib
+  DebugLib
+  PcdLib
+
+[Protocols]
+  gEfiDevicePathProtocolGuid
+
+  gEfiI2cMasterProtocolGuid
+  gEfiI2cIoProtocolGuid
+  gEfiI2cEnumerateProtocolGuid
+  gEfiI2cHostProtocolGuid
+  gEfiI2cBusConfigurationManagementProtocolGuid
+
+  gEfiDriverBindingProtocolGuid
+  gEfiComponentName2ProtocolGuid
+  gEfiPciRootBridgeIoProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiUsb2HcProtocolGuid
+  gEfiUsbHcProtocolGuid
+  gEfiUsbIoProtocolGuid
+  gEfiUsbFunctionIoProtocolGuid
+

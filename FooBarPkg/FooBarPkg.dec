@@ -1,0 +1,8 @@
+
+  [Defines]
+  DEC_SPECIFICATION              = 0x00010006
+  PACKAGE_NAME                   = FooBarPkg
+  PACKAGE_GUID                   = e50905aa-809a-40bd-bd7b-a1a33900e8d2
+  PACKAGE_VERSION                = 0.1
+
+  
