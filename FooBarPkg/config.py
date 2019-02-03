@@ -3,7 +3,9 @@
 # pylint: disable=invalid-name, line-too-long
 
 """config.py"""
+
 import os
+import uuid
 
 # Basic global settings for all the workspace.
 # The relative path are based from current-working-dir
@@ -25,7 +27,7 @@ WORKSPACE["conf_path"] = os.environ.get("CONF_PATH", "%s/%s" % (WORKSPACE["path"
 PLATFORM = {
     "path"                          : "%s/%s.dsc" % (WORKSPACE["output_directory"], WORKSPACE["platform_name"]),
     "Defines"                       : {
-        "PLATFORM_GUID"             : "f54ef133-c2ec-441e-a105-7fc1f5fdfbac",
+        "PLATFORM_GUID"             : str(uuid.uuid4()),     #"f54ef133-c2ec-441e-a105-7fc1f5fdfbac",
         "OUTPUT_DIRECTORY"          : WORKSPACE["output_directory"],
         "PLATFORM_NAME"             : WORKSPACE["platform_name"],
         "BUILD_TARGETS"             : "DEBUG|RELEASE|NOOPT",
@@ -54,7 +56,7 @@ TARGET_TXT = {
 # The relative path are based from $(WORKSPACE)
 COMPONENTS = {
     "I2CProtocols.inf" : {
-        "path" : WORKSPACE["output_directory"] + "/I2CProtocols.inf",
+        "path" : WORKSPACE["output_directory"] + "/" + "I2CProtocols.inf",
         "source_dir" : os.path.basename(os.getcwd()),
         "Defines" : {
             "VERSION_STRING": "0.1",
@@ -62,7 +64,7 @@ COMPONENTS = {
             "BASE_NAME":      "I2CProtocols",
             "MODULE_TYPE":    "UEFI_APPLICATION",
             "ENTRY_POINT":    "ShellCEntryLib",
-            "FILE_GUID":      "92e7ac00-49bc-47dd-9790-f1dec616981d"
+            "FILE_GUID":      str(uuid.uuid4()),
         },
         "Sources" : [
             "I2CProtocols.c"
