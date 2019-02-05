@@ -279,9 +279,104 @@ IpSecConfig_INF = {
     ]
 }
 
+# ShellPkg/Application/Shell/Shell.inf
+Shell_INF = {
+    "path" : WORKSPACE["tmp_dir"] + "/Shell.inf",
+    "arch" : "X64",
+    "update" : True,
+    "Defines" : {
+        "INF_VERSION" :     "0x00010006",
+        "BASE_NAME" :       "Shell",
+        "FILE_GUID" :       "7C04A583-9E3E-4f1c-AD65-E05268D0B4D1", # gUefiShellFileGuid
+        "MODULE_TYPE" :     "UEFI_APPLICATION",
+        "VERSION_STRING" :  "1.0",
+        "ENTRY_POINT" :     "UefiMain",
+    },
+    "Sources" : [
+        "ShellPkg/Application/Shell/Shell.c",
+        "ShellPkg/Application/Shell/Shell.h",
+        "ShellPkg/Application/Shell/ShellParametersProtocol.c",
+        "ShellPkg/Application/Shell/ShellParametersProtocol.h",
+        "ShellPkg/Application/Shell/ShellProtocol.c",
+        "ShellPkg/Application/Shell/ShellProtocol.h",
+        "ShellPkg/Application/Shell/FileHandleWrappers.c",
+        "ShellPkg/Application/Shell/FileHandleWrappers.h",
+        "ShellPkg/Application/Shell/FileHandleInternal.h",
+        "ShellPkg/Application/Shell/ShellEnvVar.c",
+        "ShellPkg/Application/Shell/ShellEnvVar.h",
+        "ShellPkg/Application/Shell/ShellManParser.c",
+        "ShellPkg/Application/Shell/ShellManParser.h",
+        "ShellPkg/Application/Shell/Shell.uni",
+        "ShellPkg/Application/Shell/ConsoleLogger.c",
+        "ShellPkg/Application/Shell/ConsoleLogger.h",
+        "ShellPkg/Application/Shell/ConsoleWrappers.c",
+        "ShellPkg/Application/Shell/ConsoleWrappers.h",
+    ],
+    "Packages" : [
+        "MdePkg/MdePkg.dec",
+        "ShellPkg/ShellPkg.dec",
+        "MdeModulePkg/MdeModulePkg.dec",
+    ],
+    "LibraryClasses" : [
+        ["BaseLib", "MdePkg/Library/BaseLib/BaseLib.inf",],
+        ["UefiApplicationEntryPoint", "MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf",],
+        ["UefiLib", "MdePkg/Library/UefiLib/UefiLib.inf",],
+        ["DebugLib", "MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf",],
+        ["MemoryAllocationLib", "MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf",],
+        ["ShellCommandLib", "ShellPkg/Library/UefiShellCommandLib/UefiShellCommandLib.inf"],
+        ["UefiRuntimeServicesTableLib", "MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf"],
+        ["UefiBootServicesTableLib", "MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf",],
+        ["DevicePathLib", "MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf",],
+        ["BaseMemoryLib", "MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf",],
+        ["PcdLib", "MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf",],
+        ["FileHandleLib", "MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf"],
+        ["PrintLib", "MdePkg/Library/BasePrintLib/BasePrintLib.inf",],
+        ["HiiLib", "MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf"],
+        ["SortLib", "MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf"],
+        ["HandleParsingLib", "ShellPkg/Library/UefiHandleParsingLib/UefiHandleParsingLib.inf"],
+        ["UefiHiiServicesLib", "MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf"],
+        ["ShellLib", "ShellPkg/Library/UefiShellLib/UefiShellLib.inf"],
+        ["PeCoffGetEntryPointLib", "MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf"],
+    ],
+    "Guids" : [
+        "gShellVariableGuid",   ## SOMETIMES_CONSUMES ## GUID
+        "gShellAliasGuid",      ## SOMETIMES_CONSUMES ## GUID
+        "gShellAliasGuid",      ## SOMETIMES_PRODUCES ## GUID
+    ],
+    "Protocols" : [
+        "gEfiShellProtocolGuid",                                   ## PRODUCES
+                                                                   ## SOMETIMES_CONSUMES
+        "gEfiShellParametersProtocolGuid",                         ## PRODUCES
+                                                                   ## SOMETIMES_CONSUMES
+        "gEfiSimpleTextInputExProtocolGuid",                       ## CONSUMES
+        "gEfiSimpleTextInProtocolGuid",                            ## CONSUMES
+        "gEfiSimpleTextOutProtocolGuid",                           ## CONSUMES
+        "gEfiSimpleFileSystemProtocolGuid",                        ## SOMETIMES_CONSUMES
+        "gEfiLoadedImageProtocolGuid",                             ## CONSUMES
+        "gEfiComponentName2ProtocolGuid",                          ## SOMETIMES_CONSUMES
+        "gEfiUnicodeCollation2ProtocolGuid",                       ## CONSUMES
+        "gEfiDevicePathProtocolGuid",                              ## CONSUMES
+        "gEfiHiiPackageListProtocolGuid",                          ## SOMETIMES_PRODUCES
+    ],
+    "Pcd" : [
+        "gEfiShellPkgTokenSpaceGuid.PcdShellSupportLevel",           ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellSupportOldProtocols",    ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellRequireHiiPlatform",     ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellSupportFrameworkHii",    ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellPageBreakDefault",       ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellInsertModeDefault",      ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellScreenLogCount",         ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellPrintBufferSize",        ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellForceConsole",           ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellSupplier",               ## CONSUMES
+        "gEfiShellPkgTokenSpaceGuid.PcdShellMaxHistoryCommandCount", ## CONSUMES
+    ]
+}
+
 # The relative-paths are reletive to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
 COMPONENTS = [
-    I2CProtocols_INF,
-    Platform_INF,
-    IpSecConfig_INF,
+    #I2CProtocols_INF,
+    #Platform_INF,
+    #IpSecConfig_INF,
+    Shell_INF,
 ]
