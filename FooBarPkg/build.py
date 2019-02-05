@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name, line-too-long
+# pylint: disable=invalid-name, line-too-long, too-many-nested-blocks, too-many-branches
+
 
 """
 A front-end to build the EFI driver(s) from a sandbox package.
@@ -20,7 +21,10 @@ PREREQUISITES for the UDK build:
 
 TODO:
 1. keyword list of the supported setion names of DSC and INF.
-2. automate the tool-chain for Windows/Linux/Mac.
+2. X64/IA32 section differenciation.
+3. PCD awareness.
+4. automate the tool-chain for Windows/Linux/Mac.
+
 
 """
 
@@ -36,9 +40,11 @@ import multiprocessing
 
 sys.dont_write_bytecode = True      # To inhibit the creation of .pyc file
 
-VERBOSE = 1
+VERBOSE_LEVEL = 1
 UDKBUILD_MAKETOOL = 'nmake' if os.name == 'nt' else 'make'
 UDKBUILD_COMMAND_JOINTER = '&' if os.name == 'nt' else ';'
+
+default_pug_signature = '#\n# This is automatically created by PUG.\n#\n'
 
 try:
     import config
@@ -51,38 +57,56 @@ def abs_path(sub_dir, base_dir):
     """return an absolute path."""
     return sub_dir if os.path.isabs(sub_dir) else os.path.join(base_dir, sub_dir)
 
-def write_file(path, content):
+
+def write_file(path, content, signature=''):
     """update a platfor's dsc file content.
     - create the folder when it does not exist.
-    - skip write when the contents are identical."""
-    path_dir = os.path.dirname(path)
-    content0 = ''
+    - skip write attept when the contents are identical"""
+
     if hasattr(content, '__iter__'):
         content = '\n'.join(content)
-    if os.path.exists(path):
-        with open(path, 'r') as pf:
-            content0 = pf.read()
-        if content0 == content:
-            return
+    if signature:
+        content = signature + content
+    path_dir = os.path.dirname(path)
+    content0 = ''
     if not os.path.exists(path_dir):
         os.makedirs(path_dir)
+    else:
+        if os.path.exists(path):
+            with open(path, 'r') as pf:
+                content0 = pf.read()
+            if content0 == content:
+                return
     with open(path, 'w') as pf:
         pf.write(content)
 
 
-def conf_files(files, dest_conf_dir='', verbose=False):
+def conf_files(files, dest_conf_dir, verbose=False):
     """Ref. BaseTools/BuildEnv for build_rule.txt , tools_def.txt and target.txt"""
-    if not dest_conf_dir:
-        dest_conf_dir = os.environ.get('CONF_PATH', os.path.join(os.environ['WORKSPACE'], 'Conf'))
+    dest_conf_dir = os.path.abspath(dest_conf_dir)
     if not os.path.exists(dest_conf_dir):
         os.makedirs(dest_conf_dir)
+    os.environ["CONF_PATH"] = dest_conf_dir
     src_conf_dir = os.path.join(os.environ.get('EDK_TOOLS_PATH', os.path.join(os.environ['WORKSPACE'], 'BaseTools')), 'Conf')
     for f in files:
-        src_conf_path = os.path.join(src_conf_dir, '%s.template'%f)
-        dest_conf_path = os.path.join(dest_conf_dir, '%s.txt'%f)
+        src_conf_path = os.path.join(src_conf_dir, '%s.template' % f)
+        dest_conf_path = os.path.join(dest_conf_dir, '%s.txt' % f)
         if verbose:
             print('Copy %s\nTo   %s' % (src_conf_path, dest_conf_path))
         shutil.copyfile(src_conf_path, dest_conf_path)
+
+
+def gen_section(items, override=None, section='', sep='='):
+    """generate a section's content"""
+    ret_list = []
+    if section:
+        ret_list += ['\n[%s]' % section]
+    if items:
+        if isinstance(items, (tuple, list)) or (override in {list, tuple}):
+            ret_list += ['  %s' % str(d) for d in sorted(items)]
+        elif isinstance(items, dict):
+            ret_list += ['  %s %s %s' % (str(d), sep, str(items[d])) for d in sorted(items)]
+    return ret_list
 
 
 def gen_target_txt(target_txt):
@@ -128,11 +152,8 @@ def LaunchCommand(Command, WorkingDir='.', verbose=False):
 
     WorkingDir = os.path.abspath(WorkingDir)
     Proc = EndOfProcedure = StdOutThread = StdErrThread = None
-    _stdout = sys.stdout
-    _stderr = sys.stderr
-    if not verbose:
-        _stdout = subprocess.PIPE
-        _stderr = subprocess.PIPE
+    _stdout = sys.stdout if verbose else subprocess.PIPE
+    _stderr = sys.stderr if verbose else subprocess.PIPE
     try:
         Proc = subprocess.Popen(Command, stdout=_stdout, stderr=_stderr, env=os.environ, cwd=WorkingDir, bufsize=-1, shell=True)
         if not verbose:
@@ -296,56 +317,63 @@ def codetree(udk_home, udk_url):
 
 def platform_dsc(platform, components, workspace):
     """generate a platform's dsc file."""
+
     dsc_path = abs_path(platform["path"], workspace)
     print("PLATFORM_DSC = %s" % dsc_path)
+    if not platform.get("update", False):
+        return
     sections = ["Defines", "Components"]
+    overrides = {"LibraryClasses", "PcdsFixedAtBuild", "BuildOptions"}
     pfile = []
     for s in sections:
-        pfile += ['[%s]' % s]
-        s0 = s.split('.')[0]
-        if s0 == 'Components':
-            for c in sorted(components):
-                pfile += ['  %s' % components[c]["path"]]
-                if 'LibraryClasses' in components[c]:
-                    pfile[-1] += ' {'
-                    pfile += ['    <LibraryClasses>']
-                    for l in components[c]["LibraryClasses"]:
-                        pfile += ['      %s | %s' % (l, components[c]["LibraryClasses"][l])]
+        if s == 'Components':
+            pfile += gen_section(None, section=s)
+            for compc in components:
+                pfile += ['  %s' % compc["path"]]
+                in_override = False
+                ovs = overrides.intersection(set(compc.keys()))
+                for ov in ovs:
+                    #print("Override: %s" % ov)
+                    if not in_override:
+                        pfile[-1] += ' {'
+                        in_override = True
+                    pfile += ['    <%s>' % ov]
+                    sep = '|' if ov in {"LibraryClasses", "PcdsFixedAtBuild"} else '='
+                    for d in compc[ov]:
+                        pfile += ['      %s %s %s' % (d[0], sep, d[1])]
+                if in_override:
                     pfile += ['  }']
-        elif isinstance(platform[s], list):
-            for d in sorted(platform[s]):
-                pfile += ['  %s' % d]
-        elif isinstance(platform[s], dict):
-            for d in sorted(platform[s]):
-                pfile += ['  %s = %s' % (d, platform[s][d])]
-        pfile += ['']
-    write_file(dsc_path, pfile)
+        else:
+            pfile += gen_section(platform[s], section=s)
+    write_file(dsc_path, pfile, default_pug_signature)
 
 
 def component_inf(components, workspace):
     """generate INF files of components."""
-    sections = ['Defines', 'Sources', 'Packages', 'LibraryClasses', 'Protocols', 'Ppis', 'Guids']
-    cfile = []
-    for c in components:
-        ccomp = components[c]
-        inf_path = abs_path(ccomp["path"], workspace)
-        source_dir = ccomp.get('source_dir', '')
+    sections = [
+        'Sources', 'Packages', 'LibraryClasses', 'Protocols', 'Ppis',
+        'Guids', 'FeaturePcd', 'Pcd', 'BuildOptions', 'Depex', 'UserExtensions',
+    ]
+    for comp in components:
+        cfile = []
+        inf_path = abs_path(comp.get('path', ""), workspace)
         print('COMPONENT: %s' % inf_path)
-        for s in sections:
-            if s not in ccomp:
-                continue
-            cfile += ['[%s]' % s]
+        if not comp.get("update", False):
+            continue
+        defines = comp.get('Defines', '')
+        if not defines:
+            raise Exception('INF must contain [Defines] section.')
+        cfile += gen_section(defines, section='Defines')
+        for s in comp:
             s0 = s.split('.')[0]
-            if isinstance(ccomp[s], list) or (s0 == 'LibraryClasses'):
-                for d in sorted(ccomp[s]):
-                    if s0 == 'Sources':
-                        d = os.path.join(source_dir, d)
-                    cfile += ['  %s' % d]
-            elif isinstance(ccomp[s], dict):
-                for d in sorted(ccomp[s]):
-                    cfile += ['  %s = %s' % (d, ccomp[s][d])]
-            cfile += ['']
-        write_file(inf_path, cfile)
+            if s0 not in sections:
+                continue
+            #cfile += ['[%s]' % s]
+            if  s0 == 'LibraryClasses':
+                cfile += gen_section([v[0] for v in comp[s]], section=s, override=list)
+            else:
+                cfile += gen_section(comp[s], section=s)
+        write_file(inf_path, cfile, default_pug_signature)
 
 
 def build():
@@ -364,17 +392,17 @@ def build():
         return r
 
     env_vars(workspace, udk_home)
-    conf_files(['build_rule', 'tools_def', 'target'], verbose=(VERBOSE > 1))
+    conf_files(['build_rule', 'tools_def', 'target'], config.WORKSPACE["conf_path"], VERBOSE_LEVEL > 1)
     gen_target_txt(config.TARGET_TXT)
 
-    r, out, err = basetools(verbose=(VERBOSE > 1))
+    r, out, err = basetools(verbose=(VERBOSE_LEVEL > 1))
     if r:
         if out or err:
             print('%s' % '\n'.join([out, 'Error:', err]))
         return r
 
-    component_inf(config.COMPONENTS, workspace)
     platform_dsc(config.PLATFORM, config.COMPONENTS, workspace)
+    component_inf(config.COMPONENTS, workspace)
 
     udkbuild_cmds = []
     if os.name == 'nt':
@@ -385,11 +413,13 @@ def build():
     udkbuild_cmds += [
         'cd', os.environ['WORKSPACE'], UDKBUILD_COMMAND_JOINTER,
         'build',
+        "-y", config.WORKSPACE["report_log"],
+        "-Y", "PCD",
         '-n', '%d' % multiprocessing.cpu_count(),
         '-N',
     ] + sys.argv[1:]
 
-    r, out, err = LaunchCommand(udkbuild_cmds, verbose=VERBOSE)
+    r, out, err = LaunchCommand(udkbuild_cmds, verbose=VERBOSE_LEVEL)
     if r:
         if out or err:
             print('%s' % '\n'.join([out, 'Error:', err]))
