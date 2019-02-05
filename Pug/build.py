@@ -7,6 +7,15 @@
 PUG: "Pug, the Uefi Guidedog", or "the Programmer's Uefi Guide".
 
 A front-end to build the EFI driver(s) from a sandbox package.
+
+8b,dPPYba,  88       88  ,adPPYb,d8
+88P'    "8a 88       88 a8"    `Y88
+88       d8 88       88 8b       88
+88b,   ,a8" "8a,   ,a88 "8a,   ,d88
+88`YbbdP"'   `"YbbdP'Y8  `"YbbdP"Y8
+88                       aa,    ,88
+88                        "Y8bbdP"
+
 Timothy Lin Jan/30/2019, BSD 3-Clause License.
 
 PREREQUISITES:
@@ -26,15 +35,6 @@ TODO:
 2. X64/IA32 section differenciation.
 3. automate the tool-chain for Windows/Linux/Mac.
 
-Artwork:
-8b,dPPYba,  88       88  ,adPPYb,d8
-88P'    "8a 88       88 a8"    `Y88
-88       d8 88       88 8b       88
-88b,   ,a8" "8a,   ,a88 "8a,   ,d88
-88`YbbdP"'   `"YbbdP'Y8  `"YbbdP"Y8
-88                       aa,    ,88
-88                        "Y8bbdP"
-
 """
 
 from __future__ import print_function
@@ -53,12 +53,12 @@ VERBOSE_LEVEL = 1
 UDKBUILD_MAKETOOL = 'nmake' if os.name == 'nt' else 'make'
 UDKBUILD_COMMAND_JOINTER = '&' if os.name == 'nt' else ';'
 
-default_pug_signature = '#\n# This is automatically created by PUG.\n#\n'
+default_pug_signature = '#\n# This file is automatically created by PUG.\n#\n'
 
 try:
     import config
 except ImportError:
-    print('Unable to load config.py.')
+    print('Unable to load the configuration file, config.py.')
     raise
 
 
@@ -134,7 +134,6 @@ def gen_target_txt(target_txt):
 
 def LaunchCommand(Command, WorkingDir='.', verbose=False):
     """A derative of UDK's BaseTools/build/build.py"""
-
     LaunchCommand.stdout_buffer = []
     LaunchCommand.stderr_buffer = []
     def ReadMessage(From, To, ExitFlag):
