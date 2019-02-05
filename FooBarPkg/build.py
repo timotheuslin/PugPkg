@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=invalid-name, line-too-long, too-many-nested-blocks, too-many-branches
+# pylint: disable=invalid-name, line-too-long, too-many-nested-blocks, too-many-branches, too-many-locals
 
 
 """
+PUG: "Pug, the Uefi Guidedog", or "the Programmer's Uefi Guide".
+
 A front-end to build the EFI driver(s) from a sandbox package.
 Timothy Lin Jan/30/2019, BSD 3-Clause License.
 
@@ -22,9 +24,16 @@ PREREQUISITES for the UDK build:
 TODO:
 1. keyword list of the supported setion names of DSC and INF.
 2. X64/IA32 section differenciation.
-3. PCD awareness.
-4. automate the tool-chain for Windows/Linux/Mac.
+3. automate the tool-chain for Windows/Linux/Mac.
 
+Artwork:
+8b,dPPYba,  88       88  ,adPPYb,d8
+88P'    "8a 88       88 a8"    `Y88
+88       d8 88       88 8b       88
+88b,   ,a8" "8a,   ,a88 "8a,   ,d88
+88`YbbdP"'   `"YbbdP'Y8  `"YbbdP"Y8
+88                       aa,    ,88
+88                        "Y8bbdP"
 
 """
 
@@ -63,7 +72,7 @@ def write_file(path, content, signature=''):
     - create the folder when it does not exist.
     - skip write attept when the contents are identical"""
 
-    if hasattr(content, '__iter__'):
+    if isinstance(content, (list, tuple)):
         content = '\n'.join(content)
     if signature:
         content = signature + content
@@ -96,16 +105,21 @@ def conf_files(files, dest_conf_dir, verbose=False):
         shutil.copyfile(src_conf_path, dest_conf_path)
 
 
-def gen_section(items, override=None, section='', sep='='):
+def gen_section(items, override=None, section='', sep='=', ident=0):
     """generate a section's content"""
     ret_list = []
     if section:
-        ret_list += ['\n[%s]' % section]
+        ret_list += ['\n%s[%s]' % (' '*ident*2, section)]
     if items:
         if isinstance(items, (tuple, list)) or (override in {list, tuple}):
-            ret_list += ['  %s' % str(d) for d in sorted(items)]
+            for d in items:
+                if d:
+                    if isinstance(d, (list, tuple)):
+                        ret_list += ['%s%s' % (' '*(ident+1)*2, sep.join(d))]
+                    else:
+                        ret_list += ['%s%s' % (' '*(ident+1)*2, str(d))]
         elif isinstance(items, dict):
-            ret_list += ['  %s %s %s' % (str(d), sep, str(items[d])) for d in sorted(items)]
+            ret_list += ['%s%s %s %s' % (' '*(ident+1)*2, str(d), sep, str(items[d])) for d in sorted(items) if d]
     return ret_list
 
 
@@ -128,25 +142,27 @@ def LaunchCommand(Command, WorkingDir='.', verbose=False):
         while True:
             Line = From.readline()
             if Line:
-                To(Line.rstrip('\n'))
+                To(Line.rstrip())
             if not Line or ExitFlag.isSet():
                 break
 
-    def logger_stdout(msg):
-        """print message from stdout"""
+    def __logger(msg, bufferx):
+        if isinstance(msg, bytes):
+            msg = msg.decode('utf-8')
         if verbose:
             print('%s' % msg)
         else:
-            LaunchCommand.stdout_buffer += [msg]
+            bufferx += [msg]
+
+    def logger_stdout(msg):
+        """print message from stdout"""
+        __logger(msg, LaunchCommand.stdout_buffer)
 
     def logger_stderr(msg):
         """print message from stderr"""
-        if verbose:
-            print('%s' % msg)
-        else:
-            LaunchCommand.stderr_buffer += [msg]
+        __logger(msg, LaunchCommand.stderr_buffer)
 
-    if hasattr(Command, '__iter__'):
+    if isinstance(Command, (list, tuple)):
         Command = ' '. join(Command)
     print('%s' % Command)
 
@@ -263,7 +279,7 @@ def basetools(verbose=0):
         build_basetools_cmds += [
             '--jobs', '%d' % multiprocessing.cpu_count()
         ]
-    if len(sys.argv) > 1 and sys.argv[1].lower() == 'cleanall':
+    if 'cleanall' in sys.argv[1:]:
         build_basetools_cmds += ['clean']
     return LaunchCommand(build_basetools_cmds, verbose=verbose)
 
@@ -323,7 +339,7 @@ def platform_dsc(platform, components, workspace):
     if not platform.get("update", False):
         return
     sections = ["Defines", "Components"]
-    overrides = {"LibraryClasses", "PcdsFixedAtBuild", "BuildOptions"}
+    overrides = {"LibraryClasses", "PcdsFixedAtBuild"} #, "BuildOptions"}
     pfile = []
     for s in sections:
         if s == 'Components':
@@ -340,7 +356,8 @@ def platform_dsc(platform, components, workspace):
                     pfile += ['    <%s>' % ov]
                     sep = '|' if ov in {"LibraryClasses", "PcdsFixedAtBuild"} else '='
                     for d in compc[ov]:
-                        pfile += ['      %s %s %s' % (d[0], sep, d[1])]
+                        if d and d[0]:
+                            pfile += ['      %s %s %s' % (d[0], sep, d[1])]
                 if in_override:
                     pfile += ['  }']
         else:
@@ -370,7 +387,7 @@ def component_inf(components, workspace):
                 continue
             #cfile += ['[%s]' % s]
             if  s0 == 'LibraryClasses':
-                cfile += gen_section([v[0] for v in comp[s]], section=s, override=list)
+                cfile += gen_section([v[0] for v in comp[s] if v[0] != 'NULL'], section=s, override=list)
             else:
                 cfile += gen_section(comp[s], section=s)
         write_file(inf_path, cfile, default_pug_signature)
@@ -413,11 +430,17 @@ def build():
     udkbuild_cmds += [
         'cd', os.environ['WORKSPACE'], UDKBUILD_COMMAND_JOINTER,
         'build',
-        "-y", config.WORKSPACE["report_log"],
-        "-Y", "PCD",
         '-n', '%d' % multiprocessing.cpu_count(),
         '-N',
-    ] + sys.argv[1:]
+    ]
+    report_log = config.WORKSPACE.get('report_log', '')
+    log_type = config.WORKSPACE.get('log_type', '')
+    if report_log:
+        udkbuild_cmds += ["-y", config.WORKSPACE["report_log"]]
+    if log_type:
+        udkbuild_cmds += ["-Y %s" % s for s in log_type.split()]
+
+    udkbuild_cmds += sys.argv[1:]
 
     r, out, err = LaunchCommand(udkbuild_cmds, verbose=VERBOSE_LEVEL)
     if r:

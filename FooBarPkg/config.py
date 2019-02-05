@@ -5,9 +5,10 @@
 """config.py
 
 TODO:
-1. revise the LibraryClasses content of the existing INF using info from
-     their static_library_files.lst and
-     their $(BASE_NAME).map - "Linker script and memory map"
+1. automate the LibraryClasses content of the existing INF using info from:
+     1.1 their static_library_files.lst, and
+     1.2 their $(BASE_NAME).map - "Linker script and memory map"
+2. automate the global/local (fixed) PCD settings from the -y/-Y build log.
 """
 
 import os
@@ -18,11 +19,12 @@ WORKSPACE = {
     "path"              : os.environ.get("WORKSPACE", ".."),
     "udk_dir"           : "../edk2",
     "udk_url"           : "https://github.com/tianocore/edk2.git",
-    "output_directory"  : "Build/FB",
-    "platform_name"     : "FooBar",
+    "output_directory"  : "Build/Pug",
+    "platform_name"     : "Pug",
     "target_arch"       : "X64",            # "IA32", "X64", "IA32 X64"
     "tool_chain_tag"    : "GCC5",           # "VS2012x86"
     "target"            : "RELEASE",        # "DEBUG", "NOOPT"
+    "log_type"          : "PCD",            # PCD, LIBRARY, FLASH, DEPEX, HASH, BUILD_FLAGS, FIXED_ADDRESS
     "tmp_dir"           : os.path.abspath("_pug_"),
 }
 
@@ -114,7 +116,7 @@ I2CProtocols_INF = {
 }
 
 # OvmfPkg/ResetVector/ResetVector.inf
-# TODO: buggy on FixePcd
+ResetVector_INF_dir = "OvmfPkg/ResetVector/"
 ResetVector_INF = {
     "path" : WORKSPACE["tmp_dir"] + "/ResetVector.inf",
     "update" : True,
@@ -126,21 +128,26 @@ ResetVector_INF = {
         "VERSION_STRING"    : "1.1",
     },
     "Sources" : [
-        "ResetVector/ResetVector.nasmb"
+        ResetVector_INF_dir + "ResetVector.nasmb"
     ],
     "Packages" : [
         "OvmfPkg/OvmfPkg.dec",
         "MdePkg/MdePkg.dec",
         "UefiCpuPkg/UefiCpuPkg.dec",
     ],
-    "BuildOptions" : {
-        "*_*_IA32_NASMB_FLAGS" : "-I$(WORKSPACE)/UefiCpuPkg/ResetVector/Vtf0/",
-        "*_*_X64_NASMB_FLAGS"  : "-I$(WORKSPACE)/UefiCpuPkg/ResetVector/Vtf0/",
-    },
+    "BuildOptions" : [
+        ["*_*_IA32_NASMB_FLAGS", "-I$(WORKSPACE)/UefiCpuPkg/ResetVector/Vtf0/"],
+        ["*_*_X64_NASMB_FLAGS", "-I$(WORKSPACE)/UefiCpuPkg/ResetVector/Vtf0/"],
+    ],
     "Pcd" : [
         "gUefiOvmfPkgTokenSpaceGuid.PcdOvmfSecPageTablesBase",
         "gUefiOvmfPkgTokenSpaceGuid.PcdOvmfSecPageTablesSize",
     ],
+    # Ref. OvmfPkg/OvmfPkg{Ia32, X64, Ia32X64}.fdf
+    "PcdsFixedAtBuild" : [
+        ["gUefiOvmfPkgTokenSpaceGuid.PcdOvmfSecPageTablesBase", 0],
+        ["gUefiOvmfPkgTokenSpaceGuid.PcdOvmfSecPageTablesSize", 0x6000],
+    ]
 }
 
 # OvmfPkg/PlatformDxe/Platform.inf
@@ -280,6 +287,8 @@ IpSecConfig_INF = {
 }
 
 # ShellPkg/Application/Shell/Shell.inf
+Shell_INF_dir = "ShellPkg/Application/Shell/"
+Shell_NO_SHELL_PROFILES = 0
 Shell_INF = {
     "path" : WORKSPACE["tmp_dir"] + "/Shell.inf",
     "arch" : "X64",
@@ -293,29 +302,33 @@ Shell_INF = {
         "ENTRY_POINT" :     "UefiMain",
     },
     "Sources" : [
-        "ShellPkg/Application/Shell/Shell.c",
-        "ShellPkg/Application/Shell/Shell.h",
-        "ShellPkg/Application/Shell/ShellParametersProtocol.c",
-        "ShellPkg/Application/Shell/ShellParametersProtocol.h",
-        "ShellPkg/Application/Shell/ShellProtocol.c",
-        "ShellPkg/Application/Shell/ShellProtocol.h",
-        "ShellPkg/Application/Shell/FileHandleWrappers.c",
-        "ShellPkg/Application/Shell/FileHandleWrappers.h",
-        "ShellPkg/Application/Shell/FileHandleInternal.h",
-        "ShellPkg/Application/Shell/ShellEnvVar.c",
-        "ShellPkg/Application/Shell/ShellEnvVar.h",
-        "ShellPkg/Application/Shell/ShellManParser.c",
-        "ShellPkg/Application/Shell/ShellManParser.h",
-        "ShellPkg/Application/Shell/Shell.uni",
-        "ShellPkg/Application/Shell/ConsoleLogger.c",
-        "ShellPkg/Application/Shell/ConsoleLogger.h",
-        "ShellPkg/Application/Shell/ConsoleWrappers.c",
-        "ShellPkg/Application/Shell/ConsoleWrappers.h",
+        Shell_INF_dir  + "Shell.c",
+        Shell_INF_dir  + "Shell.h",
+        Shell_INF_dir  + "ShellParametersProtocol.c",
+        Shell_INF_dir  + "ShellParametersProtocol.h",
+        Shell_INF_dir  + "ShellProtocol.c",
+        Shell_INF_dir  + "ShellProtocol.h",
+        Shell_INF_dir  + "FileHandleWrappers.c",
+        Shell_INF_dir  + "FileHandleWrappers.h",
+        Shell_INF_dir  + "FileHandleInternal.h",
+        Shell_INF_dir  + "ShellEnvVar.c",
+        Shell_INF_dir  + "ShellEnvVar.h",
+        Shell_INF_dir  + "ShellManParser.c",
+        Shell_INF_dir  + "ShellManParser.h",
+        Shell_INF_dir  + "Shell.uni",
+        Shell_INF_dir  + "ConsoleLogger.c",
+        Shell_INF_dir  + "ConsoleLogger.h",
+        Shell_INF_dir  + "ConsoleWrappers.c",
+        Shell_INF_dir  + "ConsoleWrappers.h",
     ],
     "Packages" : [
         "MdePkg/MdePkg.dec",
         "ShellPkg/ShellPkg.dec",
         "MdeModulePkg/MdeModulePkg.dec",
+    ],
+    "PcdsFixedAtBuild" : [
+        ["gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize", "FALSE"],
+        ["gEfiShellPkgTokenSpaceGuid.PcdShellProfileMask", "0x00"] if Shell_NO_SHELL_PROFILES else [],
     ],
     "LibraryClasses" : [
         ["BaseLib", "MdePkg/Library/BaseLib/BaseLib.inf",],
@@ -337,6 +350,19 @@ Shell_INF = {
         ["UefiHiiServicesLib", "MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf"],
         ["ShellLib", "ShellPkg/Library/UefiShellLib/UefiShellLib.inf"],
         ["PeCoffGetEntryPointLib", "MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellLevel2CommandsLib/UefiShellLevel2CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellLevel1CommandsLib/UefiShellLevel1CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellLevel3CommandsLib/UefiShellLevel3CommandsLib.inf"],
+
+        ["IoLib", "MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf"],
+        ["NetLib", "MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf"],
+        ["BcfgCommandLib", "ShellPkg/Library/UefiShellBcfgCommandLib/UefiShellBcfgCommandLib.inf"],
+        ["UefiBootManagerLib", "MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf"],
+        ["HobLib", "MdePkg/Library/DxeHobLib/DxeHobLib.inf"],
+        ["PerformanceLib", "MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf"],
+        ["DxeServicesTableLib", "MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf"],
+        ["DxeServicesLib", "MdePkg/Library/DxeServicesLib/DxeServicesLib.inf"],
+        ["ReportStatusCodeLib", "MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf"],
     ],
     "Guids" : [
         "gShellVariableGuid",   ## SOMETIMES_CONSUMES ## GUID
@@ -373,10 +399,21 @@ Shell_INF = {
     ]
 }
 
-# The relative-paths are reletive to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
+# Ref. ShellPkg/Application/Shell/*.dsc
+if not Shell_NO_SHELL_PROFILES:
+    Shell_INF["LibraryClasses"] += [
+        ["NULL", "ShellPkg/Library/UefiShellDriver1CommandsLib/UefiShellDriver1CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellInstall1CommandsLib/UefiShellInstall1CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellDebug1CommandsLib/UefiShellDebug1CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellNetwork1CommandsLib/UefiShellNetwork1CommandsLib.inf"],
+        ["NULL", "ShellPkg/Library/UefiShellNetwork2CommandsLib/UefiShellNetwork2CommandsLib.inf"],
+    ]
+
+
 COMPONENTS = [
-    #I2CProtocols_INF,
-    #Platform_INF,
-    #IpSecConfig_INF,
+    ResetVector_INF,
+    I2CProtocols_INF,
+    Platform_INF,
+    IpSecConfig_INF,
     Shell_INF,
 ]
