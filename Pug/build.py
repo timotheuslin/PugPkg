@@ -4,7 +4,7 @@
 
 
 """
-PUG: "Pug, the Uefi Guidedog", or "the Programmer's Uefi Guide".
+PUG: "Pug, the UEFI Guidedog", or "the Programmer's UEFI Guide".
 
 A front-end to build the EFI driver(s) from a sandbox package.
 
@@ -26,13 +26,13 @@ PREREQUISITES for the UDK build:
     Ref. https://github.com/tianocore/tianocore.github.io/wiki/Getting%20Started%20with%20EDK%20II
 1. nasm
 2. iasl
-3. GCC(Posix) or MSVC(Windoes)
+3. GCC(Posix) or MSVC(Windows)
 4. build-essential uuid-dev (Posix)
 5. pip2 install future
 
 TODO:
-1. keyword list of the supported setion names of DSC and INF.
-2. X64/IA32 section differenciation.
+1. keyword list of the supported section names of DSC and INF.
+2. X64/IA32 section differentiation.
 3. automate the tool-chain for Windows/Linux/Mac.
 
 """
@@ -68,9 +68,9 @@ def abs_path(sub_dir, base_dir):
 
 
 def write_file(path, content, signature=''):
-    """update a platfor's dsc file content.
+    """update a platform's dsc file content.
     - create the folder when it does not exist.
-    - skip write attept when the contents are identical"""
+    - skip write attempt when the contents are identical"""
 
     if isinstance(content, (list, tuple)):
         content = '\n'.join(content)
@@ -133,7 +133,7 @@ def gen_target_txt(target_txt):
 
 
 def LaunchCommand(Command, WorkingDir='.', verbose=False):
-    """A derative of UDK's BaseTools/build/build.py"""
+    """A derivative of UDK's BaseTools/build/build.py"""
     LaunchCommand.stdout_buffer = []
     LaunchCommand.stderr_buffer = []
     def ReadMessage(From, To, ExitFlag):
@@ -238,7 +238,7 @@ def env_vars(workspace, udk_home):
         elif k0 == '=':             # conditional assignment
             if k1 not in os.environ:
                 os.environ[k1] = v
-        else:                       # unditional assignment
+        else:                       # unconditional assignment
             os.environ[k] = v
     _env_vars('=WORKSPACE', os.path.abspath(workspace))
     _env_vars('=UDK_ABSOLUTE_DIR', os.path.abspath(udk_home))
@@ -284,7 +284,7 @@ def basetools(verbose=0):
 
 
 def codetree(udk_home, udk_url):
-    """pulll the udk code tree when it does not locally/correctly exist."""
+    """pull the udk code tree when it does not locally/correctly exist."""
     if udk_home:
         udk_home = os.path.abspath(udk_home)
     dot_git = os.path.join(udk_home, '.git')

@@ -31,9 +31,13 @@ WORKSPACE = {
 WORKSPACE["conf_path"] = os.environ.get("CONF_PATH", WORKSPACE["tmp_dir"] + "/Conf")
 WORKSPACE["report_log"] = WORKSPACE["output_directory"] + "/build_report.log"
 
+# [WORKAROUND] disable logging due to the failure of report-log under Windows.
+if os.name == 'nt':
+    WORKSPACE['report_log'] = ''
+
 #
 # PLATFORM DSC's content.
-# The relative-paths are reletive to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
+# The relative-paths are relative to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
 PLATFORM = {
     "path"                          : WORKSPACE["tmp_dir"] + "/" + WORKSPACE["platform_name"] + '.dsc',
     "update"                        : True,
@@ -52,7 +56,7 @@ PLATFORM = {
 
 # Conf/target.txt
 # Ref. BaseTools/Conf/target.template
-# The relative-paths are reletive to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
+# The relative-paths are relative to entries in {$(WORKSPACE), $(PACKAGES_PATH)}
 TARGET_TXT = {
     "path"              : WORKSPACE["conf_path"] + "/" + "target.txt",
     "update"            : True,
@@ -78,7 +82,7 @@ I2CProtocols_INF = {
         "FILE_GUID":      "a05e1015-cdca-493d-a79d-55a2e4805988",
     },
     "Sources" : [
-        os.path.basename(os.getcwd()) + "/" + "I2CProtocols.c"
+        os.path.basename(os.getcwd()) + "/I2CProtocols.c"
     ],
     "Packages" : [
         "MdePkg/MdePkg.dec",
@@ -315,7 +319,8 @@ Shell_INF = {
         Shell_INF_dir  + "ShellEnvVar.h",
         Shell_INF_dir  + "ShellManParser.c",
         Shell_INF_dir  + "ShellManParser.h",
-        Shell_INF_dir  + "Shell.uni",
+        #Shell_INF_dir  + "Shell.uni",
+        os.path.basename(os.getcwd()) + "/Shell.uni",
         Shell_INF_dir  + "ConsoleLogger.c",
         Shell_INF_dir  + "ConsoleLogger.h",
         Shell_INF_dir  + "ConsoleWrappers.c",
