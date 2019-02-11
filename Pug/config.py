@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name, line-too-long
 
-"""config.py
+"""
 
 TODO:
 1. automate the LibraryClasses content of the existing INF using info from:
@@ -11,7 +11,10 @@ TODO:
 2. automate the global/local (fixed) PCD settings from the -y/-Y build log.
 """
 
+__all__ = ['WORKSPACE', 'PLATFORM', 'TARGET_TXT', 'COMPONENTS']
+
 import os
+import sys
 
 # Basic global settings for all the workspace.
 # The relative-paths are relative to the current-working-dir.
@@ -22,18 +25,16 @@ WORKSPACE = {
     "output_directory"  : "Build/Pug",
     "platform_name"     : "Pug",
     "target_arch"       : "X64",            # "IA32", "X64", "IA32 X64"
-    "tool_chain_tag"    : "GCC5",           # "VS2012x86"
-    "target"            : "RELEASE",        # "DEBUG", "NOOPT"
-    "log_type"          : "PCD",            # PCD, LIBRARY, FLASH, DEPEX, HASH, BUILD_FLAGS, FIXED_ADDRESS
+    "tool_chain_tag"    : "MYTOOLS",        # "GCC5", "VS2012x86", "XCODE5"
+    "target"            : "RELEASE",        # "DEBUG", "NOOPT", "RELEASE"
+    "log_type"          : "PCD",            # "PCD", LIBRARY, FLASH, DEPEX, HASH, BUILD_FLAGS, FIXED_ADDRESS
     "tmp_dir"           : os.path.abspath("_pug_"),
 }
 
 WORKSPACE["conf_path"] = os.environ.get("CONF_PATH", WORKSPACE["tmp_dir"] + "/Conf")
-WORKSPACE["report_log"] = WORKSPACE["output_directory"] + "/build_report.log"
-
-# [WORKAROUND] disable logging due to the failure of report-log under Windows.
-if os.name == 'nt':
-    WORKSPACE['report_log'] = ''
+WORKSPACE["tool_chain_tag"] = 'VS2012x86' if os.name == 'nt' else 'XCODE5' if sys.platform == 'darwin' else 'GCC5'
+# [TODO] disable logging due to the failure of report-log under Windows.
+WORKSPACE["report_log"] = '' if os.name == 'nt' else WORKSPACE["output_directory"] + "/build_report.log"
 
 #
 # PLATFORM DSC's content.
