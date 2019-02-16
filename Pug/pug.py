@@ -4,10 +4,6 @@
 
 
 """
-PUG: "Pug, the UEFI Guidedog", or "the Programmer's UEFI Guide".
-
-A front-end to build the EFI driver(s) from a sandbox package.
-
  ██▓███   █    ██   ▄████
 ▓██░  ██▒ ██  ▓██▒ ██▒ ▀█▒
 ▓██░ ██▓▒▓██  ▒██░▒██░▄▄▄░
@@ -18,13 +14,16 @@ A front-end to build the EFI driver(s) from a sandbox package.
 ░░        ░░░ ░ ░ ░ ░   ░
             ░           ░
 
+PUG: "Pug, the UEFI Guidedog", or "the Programmer's UEFI Guide".
+A front-end to build the EFI driver(s) from a sandbox package.
+
 Timothy Lin Jan/30/2019, BSD 3-Clause License.
 
-PREREQUISITES:
+Prerequisites:
 1. Python 2.7 or Python 3.x
 2. git 2.17.x
 
-PREREQUISITES for the UDK build:
+Generic prerequisites for the UDK build:
 0. Ref. https://github.com/tianocore/tianocore.github.io/wiki/Getting%20Started%20with%20EDK%20II
         Xcode: https://github.com/tianocore/tianocore.github.io/wiki/Xcode
 1. nasm (2.0 or above)
@@ -33,6 +32,9 @@ PREREQUISITES for the UDK build:
 4. build-essential uuid-dev (Posix)
 5. pip2 install future
 6. motc (Xcode)
+
+Installation hints for any Debian Based Linux:
+1. sudo update & sudo apt install nasm iasl build-essential uuid-dev
 
 TODO:
 1. keyword list of the supported section names of DSC and INF.
