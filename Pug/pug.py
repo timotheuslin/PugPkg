@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name, line-too-long, too-many-nested-blocks, too-many-branches, too-many-locals
 
-
 """
  ██▓███   █    ██   ▄████
 ▓██░  ██▒ ██  ▓██▒ ██▒ ▀█▒
@@ -15,7 +14,7 @@
             ░           ░
 
 PUG: "Pug, the UEFI Guidedog", or "the Programmer's UEFI Guide".
-A front-end to build the EFI driver(s) from a sandbox package.
+A front-end to build the UEFI driver(s) from a sandbox package.
 
 Timothy Lin Jan/30/2019, BSD 3-Clause License.
 
@@ -34,11 +33,11 @@ Generic prerequisites for the UDK build:
 6. motc (Xcode)
 
 Installation hints for any Debian Based Linux:
-1. sudo update & sudo apt install nasm iasl build-essential uuid-dev
+1. sudo apt update & sudo apt install nasm iasl build-essential uuid-dev
 
 TODO:
 1. keyword list of the supported section names of DSC and INF.
-2. X64/IA32 section differentiation.
+2. X64/IA32/ARM/... section differentiation.
 3. automate the tool-chain for Windows/Linux/Mac.
 
 """
