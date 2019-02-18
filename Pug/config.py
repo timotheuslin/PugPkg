@@ -16,21 +16,21 @@ __all__ = ['WORKSPACE', 'CODETREE', 'PLATFORM', 'TARGET_TXT', 'COMPONENTS']
 import os
 import sys
 
-edk2_repos = {
-    'UDK2008'       : 'UDK2008',
-    'UDK2010'       : 'UDK2010',
-    'UDK2010.SR1'   : 'UDK2010.SR1',
-    'UDK2014'       : 'UDK2014',
-    'UDK2014.SP1'   : 'UDK2014.SP1',
-    'UDK2015'       : 'UDK2015',
-    'vUDK2017'      : 'tags/vUDK2017',
-    'UDK2017'       : 'UDK2017',
-    'vUDK2018'      : 'tags/vUDK2018',
-    'UDK2018'       : 'UDK2018',
-    '201808'        : 'tags/edk2-stable201808',
-    '201811'        : 'tags/edk2-stable201811',
-    'Latest'        : 'master',
-}
+edk2_repos = [
+    'UDK2008',
+    'UDK2010',
+    'UDK2010.SR1',
+    'UDK2014',
+    'UDK2014.SP1',
+    'UDK2015',
+    'tags/vUDK2017',
+    'UDK2017',
+    'tags/vUDK2018',
+    'UDK2018',
+    'tags/edk2-stable201808',
+    'tags/edk2-stable201811',
+    'master',
+]
 
 # Basic global settings for all the workspace.
 # The relative-paths are relative to the current-working-dir.
@@ -38,7 +38,7 @@ WORKSPACE = {
     "path"              : os.environ.get("WORKSPACE", ".."),
     "output_directory"  : "Build/Pug",
     "platform_name"     : "Pug",
-    "target_arch"       : "X64 IA32",            # "IA32", "X64", "IA32 X64"
+    "target_arch"       : "X64",            # "IA32", "X64", "IA32 X64"
     "tool_chain_tag"    : 'VS2012x86' if os.name == 'nt' else 'XCODE5' if sys.platform == 'darwin' else 'GCC5',
     "target"            : "RELEASE DEBUG",  # "DEBUG", "NOOPT", "RELEASE"
     "log_type"          : "PCD",            # "PCD", "LIBRARY", "FLASH", "DEPEX", "HASH", "BUILD_FLAGS", "FIXED_ADDRESS"
@@ -59,7 +59,8 @@ CODETREE = {
         "source"        : {
             "url"       : "https://github.com/tianocore/edk2.git",
             "signature" : "master",
-        }
+        },
+        "multiworkspace": True
     }
 }
 CODETREE.update({
@@ -69,6 +70,14 @@ CODETREE.update({
             "url"       : "https://github.com/openssl/openssl.git",
             "signature" : "OpenSSL_1_1_0j",
         },
+    },
+    "EdkiiShellTool"    : {
+        "path"          : os.path.abspath(WORKSPACE["path"]) + '/jyao',
+        "source"        : {
+            "url"       : "https://github.com/timotheuslin/EdkiiShellTool",
+            "signature" : "496d36e37cc30640b93a87028824906633a4995f",
+        },
+        "multiworkspace": True
     }
 })
 

@@ -247,49 +247,55 @@ def locate_nasm():
     return ''
 
 
-def env_vars(workspace, udk_home):
+def env_var(k, v):
+    """Setup environment variable"""
+    k0 = k[0]
+    k1 = k[1:]
+    if v[0] == '$':             #marco from os.environ
+        v = os.environ.get(v[1:], '')
+    if k0 in {'+', '*'}:
+        try:
+            ex = ''
+            if k0 == '+':       #append
+                ex = '%s%s%s' % (os.environ[k1], os.pathsep, v)
+            elif k0 == '*':     #prepend
+                ex = '%s%s%s' % (v, os.pathsep, os.environ[k1])
+            os.environ[k1] = ex
+        except KeyError:
+            os.environ[k1] = v
+    elif k0 == '=':             # conditional assignment
+        if k1 not in os.environ:
+            os.environ[k1] = v
+    else:                       # unconditional assignment
+        os.environ[k] = v
+
+
+def setup_env_vars(workspace, codetree):
     """Setup environment variables"""
-    #def _env_vars(env_dict):
-    def _env_vars(k, v):
-        """Setup environment variables"""
-        k0 = k[0]
-        k1 = k[1:]
-        if v[0] == '$':             #marco from os.environ
-            v = os.environ.get(v[1:], '')
-        if k0 in {'+', '*'}:
-            try:
-                ex = ''
-                if k0 == '+':       #append
-                    ex = '%s%s%s' % (os.environ[k1], os.pathsep, v)
-                elif k0 == '*':     #prepend
-                    ex = '%s%s%s' % (v, os.pathsep, os.environ[k1])
-                os.environ[k1] = ex
-            except KeyError:
-                os.environ[k1] = v
-        elif k0 == '=':             # conditional assignment
-            if k1 not in os.environ:
-                os.environ[k1] = v
-        else:                       # unconditional assignment
-            os.environ[k] = v
-    _env_vars('=WORKSPACE', os.path.abspath(workspace))
-    _env_vars('=UDK_ABSOLUTE_DIR', os.path.abspath(udk_home))
-    _env_vars('=EDK_TOOLS_PATH', os.path.join(os.environ['UDK_ABSOLUTE_DIR'], 'BaseTools'))
-    _env_vars('+PACKAGES_PATH', '$UDK_ABSOLUTE_DIR')
-    _env_vars('+PACKAGES_PATH', os.path.abspath(".."))
-    _env_vars('=CONF_PATH', os.path.join(os.environ['WORKSPACE'], 'Conf'))
-    _env_vars('=BASE_TOOLS_PATH', '$EDK_TOOLS_PATH')
-    _env_vars('=PYTHONPATH', os.path.join(os.environ['EDK_TOOLS_PATH'], 'Source', 'Python'))
-    _env_vars('=EDK_TOOLS_PATH_BIN', os.path.join(os.environ['EDK_TOOLS_PATH'], 'BinWrappers', "WindowsLike" if os.name == 'nt' else 'PosixLike'))
+    env_var('=WORKSPACE', os.path.abspath(workspace))
+    udk_home = config.CODETREE["edk2"]['path']
+    env_var('=UDK_ABSOLUTE_DIR', os.path.abspath(udk_home))
+    env_var('=EDK_TOOLS_PATH', os.path.join(os.environ['UDK_ABSOLUTE_DIR'], 'BaseTools'))
+    env_var('=CONF_PATH', os.path.join(os.environ['WORKSPACE'], 'Conf'))
+    env_var('=BASE_TOOLS_PATH', '$EDK_TOOLS_PATH')
+    env_var('=PYTHONPATH', os.path.join(os.environ['EDK_TOOLS_PATH'], 'Source', 'Python'))
+    env_var('=EDK_TOOLS_PATH_BIN', os.path.join(os.environ['EDK_TOOLS_PATH'], 'BinWrappers', "WindowsLike" if os.name == 'nt' else 'PosixLike'))
 
     if os.name == 'nt':
-        _env_vars('*PATH', os.path.join(os.environ['EDK_TOOLS_PATH'], 'Bin', 'Win32'))
-        _env_vars('=PYTHON_HOME', os.path.dirname(sys.executable))
-        _env_vars('=PYTHONHOME', os.path.dirname(sys.executable))
+        env_var('*PATH', os.path.join(os.environ['EDK_TOOLS_PATH'], 'Bin', 'Win32'))
+        env_var('=PYTHON_HOME', os.path.dirname(sys.executable))
+        env_var('=PYTHONHOME', os.path.dirname(sys.executable))
         nasm_path = locate_nasm()
         if nasm_path:
-            _env_vars('=NASM_PREFIX', nasm_path + os.sep)
-
-    _env_vars('*PATH', '$EDK_TOOLS_PATH_BIN')
+            env_var('=NASM_PREFIX', nasm_path + os.sep)
+    env_var('*PATH', '$EDK_TOOLS_PATH_BIN')
+    env_var('+PACKAGES_PATH', '$UDK_ABSOLUTE_DIR')
+    env_var('+PACKAGES_PATH', os.path.abspath(".."))
+    for c in codetree:
+        if c == 'edk2':
+            continue
+        if codetree[c].get('multiworkspace', False):
+            env_var('+PACKAGES_PATH', codetree[c]["path"])
 
     print('WORKSPACE      = %s' % os.environ['WORKSPACE'])
     print('PACKAGES_PATH  = %s' % os.environ['PACKAGES_PATH'])
@@ -421,7 +427,7 @@ def build():
         print('Do you have the valid read-write access to that folder?')
         return r
 
-    env_vars(workspace, udk_home)
+    setup_env_vars(workspace, config.CODETREE)
     conf_files(['build_rule', 'tools_def', 'target'], config.WORKSPACE["conf_path"], VERBOSE_LEVEL > 1)
     gen_target_txt(config.TARGET_TXT)
 
