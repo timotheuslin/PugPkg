@@ -66,6 +66,17 @@ except ImportError:
     print('Unable to load the configuration file, config.py.')
     raise
 
+def cdpopd(d=''):
+    """chdir | popd"""
+    if d:
+        cdpopd.pushd += [os.getcwd()]
+    else:
+        if cdpopd.pushd:
+            d = cdpopd.pushd.pop()
+    if d:
+        os.chdir(d)
+cdpopd.pushd = []
+
 
 def abs_path(sub_dir, base_dir):
     """return an absolute path."""
@@ -137,12 +148,16 @@ def gen_target_txt(target_txt):
     write_file(target_txt["path"], tt)
 
 
-def LaunchCommand(Command, WorkingDir='.', verbose=False, stdout_buffer=None, stderr_buffer=None):
-    """A derivative of UDK's BaseTools/build/build.py"""
-    if stdout_buffer is None:
-        stdout_buffer = []
-    if stderr_buffer is None:
-        stderr_buffer = []
+def run(Command, WorkingDir='.', verbose=False):
+    """A derivative of UDK's BaseTools/build/build.py::launch_command
+
+        returns
+        [0] - error code
+        [1] - buffered stdout content
+        [2] - buffered stderr content
+    """
+    stdout_buffer = []
+    stderr_buffer = []
     def ReadMessage(From, To, ExitFlag):
         """read message fro stream"""
         while True:
@@ -172,6 +187,7 @@ def LaunchCommand(Command, WorkingDir='.', verbose=False, stdout_buffer=None, st
     print('%s' % Command)
 
     WorkingDir = os.path.abspath(WorkingDir)
+    cdpopd(WorkingDir)
     Proc = EndOfProcedure = StdOutThread = StdErrThread = None
     _stdout = sys.stdout if verbose else subprocess.PIPE
     _stderr = sys.stderr if verbose else subprocess.PIPE
@@ -202,9 +218,20 @@ def LaunchCommand(Command, WorkingDir='.', verbose=False, stdout_buffer=None, st
         if Proc.stderr and StdErrThread:
             StdErrThread.join()
         return_code = Proc.returncode
-    s1 = '\n'.join(stdout_buffer)
-    s2 = '\n'.join(stderr_buffer)
-    return return_code, s1, s2
+    cdpopd()
+    return return_code, stdout_buffer, stderr_buffer
+
+
+def print_run_result(r, success_msg=''):
+    """print the stdour & stderr when return code is non-zero."""
+    if r[0]:
+        s1 = '\n'.join(r[1])
+        s2 = '\n'.join(r[2])
+        if s1 or s2:
+            print('%s' % '\n'.join([s1, 'Error:', s2]))
+    elif success_msg:
+        print('%s' % success_msg)
+    return r[0]
 
 
 def locate_nasm():
@@ -270,68 +297,51 @@ def env_vars(workspace, udk_home):
     print('CONF_PATH      = %s' % os.environ['CONF_PATH'])
 
 
-def basetools(verbose=0):
+def build_basetools(verbose=0):
     """build the C-lang executables in Basetools.
     Use: sys.argv[1]: "clean" """
-
-    build_basetools_cmds = [
-        'cd', os.environ['EDK_TOOLS_PATH'], UDKBUILD_COMMAND_JOINTER,
+    home_dir = os.environ['EDK_TOOLS_PATH']
+    cmds = [
         UDKBUILD_MAKETOOL,
     ]
     if UDKBUILD_MAKETOOL == 'make':
-        build_basetools_cmds += [
+        cmds += [
             '--jobs', '%d' % multiprocessing.cpu_count()
         ]
     if 'cleanall' in sys.argv[1:]:
-        build_basetools_cmds += ['clean']
-    return LaunchCommand(build_basetools_cmds, verbose=verbose)
+        cmds += ['clean']
+    return run(cmds, home_dir, verbose=verbose)
 
 
-def codetree(udk_home, udk_url):
-    """pull the udk code tree when it does not locally/correctly exist."""
-    if udk_home:
-        udk_home = os.path.abspath(udk_home)
-    dot_git = os.path.join(udk_home, '.git')
-    getcode = ''
-    if not os.path.exists(dot_git):
-        print('No local UDK code tree: %s.' % udk_home, end='')
-        getcode = 'clone'
-    else:
-        def is_missing_pkg(pkg_names):
-            """check if any package is missing in the udk code tree"""
-            for pkg_name in pkg_names:
-                p = os.path.join(udk_home, pkg_name)
-                if not os.path.exists(p):
-                    return pkg_name
-            return ''
-        pkg = is_missing_pkg([
-            'MdeModulePkg', 'MdePkg', 'BaseTools',
-            'CryptoPkg', 'ShellPkg', 'UefiCpuPkg',
-            'PcAtChipsetPkg'])
-        if pkg:
-            print('Missing package: %s.' % pkg, end='')
-            getcode = 'checkout'
+def setup_codetree(codetree):
+    """pull the udk code tree when it does not locally/correctly exist.
+        1. git clone
+        2. git checkout tag/branch/master"""
 
-    if getcode:
-        print('  Trying to fix that...')
-        if getcode == 'clone':
-            cmds = [
-                'git', 'clone',
-                '--jobs', '%d' % multiprocessing.cpu_count(),
-                '--recurse-submodules',
-                udk_url,
-                udk_home,
-            ]
-        elif getcode == 'checkout':
-            cmds = [
-                'cd', udk_home, UDKBUILD_COMMAND_JOINTER,
-                'git', 'checkout',
-                '--recurse-submodules',
-                '.',
-            ]
-        r, _, _ = LaunchCommand(cmds, verbose=True)
-        return r
-    return 0
+    def _get_code(node):
+        """get code using git clone/checkout"""
+        local_dir = node["path"]
+        dot_git = os.path.join(local_dir, '.git')
+        url = node["source"]["url"]
+        sig = node["source"]["signature"]
+        if not os.path.exists(local_dir):
+            os.makedirs(local_dir)
+
+        if not os.path.exists(dot_git):
+            r = run(['git', 'clone', url, local_dir], local_dir, verbose=True)
+            if r[0]:
+                return r
+        return run(['git', 'checkout', sig], local_dir, verbose=True)
+
+    r0, r1, r2 = _get_code(codetree["edk2"])
+    for c in codetree:
+        if c == 'edk2':
+            continue
+        s = _get_code(codetree[c])
+        r1 += s[1]
+        r2 += s[2]
+        r0 |= s[0]
+    return print_run_result((r0, r1, r2), 'Success.')
 
 
 def platform_dsc(platform, components, workspace):
@@ -403,9 +413,9 @@ def build():
        3. UDK build."""
 
     workspace = os.path.abspath(config.WORKSPACE["path"])
-    udk_home = os.path.abspath(config.WORKSPACE["udk_dir"])
+    udk_home = os.path.abspath(config.CODETREE["edk2"]["path"])
 
-    r = codetree(udk_home, config.WORKSPACE["udk_url"])
+    r = setup_codetree(config.CODETREE)
     if r:
         print('Unable to setup the UDK code tree at: %s' % udk_home)
         print('Do you have the valid read-write access to that folder?')
@@ -415,43 +425,33 @@ def build():
     conf_files(['build_rule', 'tools_def', 'target'], config.WORKSPACE["conf_path"], VERBOSE_LEVEL > 1)
     gen_target_txt(config.TARGET_TXT)
 
-    r, out, err = basetools(verbose=(VERBOSE_LEVEL > 1))
+    r = print_run_result(build_basetools(verbose=(VERBOSE_LEVEL > 1)))
     if r:
-        if out or err:
-            print('%s' % '\n'.join([out, 'Error:', err]))
         return r
 
     platform_dsc(config.PLATFORM, config.COMPONENTS, workspace)
     component_inf(config.COMPONENTS, workspace)
 
-    udkbuild_cmds = []
+    cmds = []
     if os.name == 'nt':
-        udkbuild_cmds += [
-            os.path.join(os.environ['EDK_TOOLS_PATH'], 'set_vsprefix_envs.bat'),
-            UDKBUILD_COMMAND_JOINTER,
+        cmds += [
+            os.path.join(os.environ['EDK_TOOLS_PATH'], 'set_vsprefix_envs.bat'), UDKBUILD_COMMAND_JOINTER,
         ]
-    udkbuild_cmds += [
-        'cd', os.environ['WORKSPACE'], UDKBUILD_COMMAND_JOINTER,
+    cmds += [
         'build',
         '-n', '%d' % multiprocessing.cpu_count(),
         '-N',
     ]
-    report_log = config.WORKSPACE.get('report_log', '')
-    log_type = config.WORKSPACE.get('log_type', '')
-    if report_log:
-        udkbuild_cmds += ["-y", config.WORKSPACE["report_log"]]
-    if log_type:
-        udkbuild_cmds += ["-Y %s" % s for s in log_type.split()]
+    #report_log = config.WORKSPACE.get('report_log', '')
+    #log_type = config.WORKSPACE.get('log_type', '')
+    #if report_log:
+    #    cmds += ["-y", config.WORKSPACE["report_log"]]
+    #if log_type:
+    #    cmds += ["-Y %s" % s for s in log_type.split()]
 
-    udkbuild_cmds += sys.argv[1:]
-
-    r, out, err = LaunchCommand(udkbuild_cmds, verbose=VERBOSE_LEVEL)
-    if r:
-        if out or err:
-            print('%s' % '\n'.join([out, 'Error:', err]))
-    else:
-        print("Success.")
-    return r
+    cmds += sys.argv[1:]
+    r = run(cmds, os.environ['WORKSPACE'], verbose=VERBOSE_LEVEL)
+    return print_run_result(r, 'Success.')
 
 
 if __name__ == '__main__':

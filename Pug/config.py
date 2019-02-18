@@ -11,30 +11,66 @@ TODO:
 2. automate the global/local (fixed) PCD settings from the -y/-Y build log.
 """
 
-__all__ = ['WORKSPACE', 'PLATFORM', 'TARGET_TXT', 'COMPONENTS']
+__all__ = ['WORKSPACE', 'CODETREE', 'PLATFORM', 'TARGET_TXT', 'COMPONENTS']
 
 import os
 import sys
+
+edk2_repos = {
+    'UDK2008'       : 'UDK2008',
+    'UDK2010'       : 'UDK2010',
+    'UDK2010.SR1'   : 'UDK2010.SR1',
+    'UDK2014'       : 'UDK2014',
+    'UDK2014.SP1'   : 'UDK2014.SP1',
+    'UDK2015'       : 'UDK2015',
+    'vUDK2017'      : 'tags/vUDK2017',
+    'UDK2017'       : 'UDK2017',
+    'vUDK2018'      : 'tags/vUDK2018',
+    'UDK2018'       : 'UDK2018',
+    '201808'        : 'tags/edk2-stable201808',
+    '201811'        : 'tags/edk2-stable201811',
+    'Latest'        : 'master',
+}
 
 # Basic global settings for all the workspace.
 # The relative-paths are relative to the current-working-dir.
 WORKSPACE = {
     "path"              : os.environ.get("WORKSPACE", ".."),
-    "udk_dir"           : "../edk2",
-    "udk_url"           : "https://github.com/tianocore/edk2.git",
     "output_directory"  : "Build/Pug",
     "platform_name"     : "Pug",
-    "target_arch"       : "X64",            # "IA32", "X64", "IA32 X64"
-    "tool_chain_tag"    : "MYTOOLS",        # "GCC5", "VS2012x86", "XCODE5"
-    "target"            : "RELEASE",        # "DEBUG", "NOOPT", "RELEASE"
-    "log_type"          : "PCD",            # "PCD", LIBRARY, FLASH, DEPEX, HASH, BUILD_FLAGS, FIXED_ADDRESS
+    "target_arch"       : "X64 IA32",            # "IA32", "X64", "IA32 X64"
+    "tool_chain_tag"    : 'VS2012x86' if os.name == 'nt' else 'XCODE5' if sys.platform == 'darwin' else 'GCC5',
+    "target"            : "RELEASE DEBUG",  # "DEBUG", "NOOPT", "RELEASE"
+    "log_type"          : "PCD",            # "PCD", "LIBRARY", "FLASH", "DEPEX", "HASH", "BUILD_FLAGS", "FIXED_ADDRESS"
     "tmp_dir"           : os.path.abspath("_pug_"),
 }
+WORKSPACE.update({
+    "conf_path"         : os.environ.get("CONF_PATH", WORKSPACE["tmp_dir"] + "/Conf"),
+    # [TODO] disable logging due to the failure of report-log under Windows.
+    #"report_log"        : '' if os.name == 'nt' else WORKSPACE["output_directory"] + "/build_report.log"
+})
 
-WORKSPACE["conf_path"] = os.environ.get("CONF_PATH", WORKSPACE["tmp_dir"] + "/Conf")
-WORKSPACE["tool_chain_tag"] = 'VS2012x86' if os.name == 'nt' else 'XCODE5' if sys.platform == 'darwin' else 'GCC5'
-# [TODO] disable logging due to the failure of report-log under Windows.
-WORKSPACE["report_log"] = '' if os.name == 'nt' else WORKSPACE["output_directory"] + "/build_report.log"
+
+# Code tree layout for those remote repositories.
+# The relative-paths are relative to the current-working-dir.
+CODETREE = {
+    "edk2"              : {
+        "path"          : os.path.abspath(WORKSPACE["path"]) + '/edk2',
+        "source"        : {
+            "url"       : "https://github.com/tianocore/edk2.git",
+            "signature" : "master",
+        }
+    }
+}
+CODETREE.update({
+    "openssl"           : {
+        "path"          : CODETREE["edk2"]["path"] + "/CryptoPkg/Library/OpensslLib/openssl",
+        "source"        : {
+            "url"       : "https://github.com/openssl/openssl.git",
+            "signature" : "OpenSSL_1_1_0j",
+        },
+    }
+})
 
 #
 # PLATFORM DSC's content.
