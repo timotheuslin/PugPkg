@@ -40,7 +40,7 @@ WORKSPACE = {
     "platform_name"     : "Pug",
     "target_arch"       : "X64",            # "IA32", "X64", "IA32 X64"
     "tool_chain_tag"    : 'VS2012x86' if os.name == 'nt' else 'XCODE5' if sys.platform == 'darwin' else 'GCC5',
-    "target"            : "RELEASE DEBUG",  # "DEBUG", "NOOPT", "RELEASE"
+    "target"            : "RELEASE",        # "DEBUG", "NOOPT", "RELEASE", "RELEASE DEBUG"
     "log_type"          : "PCD",            # "PCD", "LIBRARY", "FLASH", "DEPEX", "HASH", "BUILD_FLAGS", "FIXED_ADDRESS"
     "tmp_dir"           : os.path.abspath("_pug_"),
 }

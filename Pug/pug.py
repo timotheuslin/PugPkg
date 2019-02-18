@@ -47,6 +47,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+import time
 import shutil
 import threading
 import subprocess
@@ -461,4 +462,11 @@ def build():
 
 
 if __name__ == '__main__':
-    sys.exit(build())
+    start_time = time.time()
+    r = build()
+    elapsed_time = time.gmtime(int(round(time.time() - start_time)))
+    elapsed_time_str = time.strftime("%H:%M:%S", elapsed_time) 
+    if elapsed_time.tm_yday > 1:
+        elapsed_time_str += ", %d day(s)" % (elapsed_time.tm_yday - 1)
+    print("\nPug's running elapsed time: %s" % elapsed_time_str)
+    sys.exit(r)
