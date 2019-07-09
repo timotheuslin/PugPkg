@@ -58,7 +58,7 @@ CODETREE = {
         "path"          : os.path.abspath(WORKSPACE["path"]) + '/edk2',
         "source"        : {
             "url"       : "https://github.com/tianocore/edk2.git",
-            "signature" : "master",
+            "signature" : "edk2-stable201903",
         },
         "multiworkspace": True
     }
