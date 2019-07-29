@@ -152,10 +152,10 @@ INTN EFIAPI ShellAppMain(
     IN UINTN Argc,
     IN CHAR16 **Argv)
 {
-    Print(
-        L"PciCfgMem - Dump the PCI configuration space memory. "    \
-        __TIME__ " " __DATE__ "\n"                                  \
-        L"  https://github.com/timotheuslin\n\n"
+    AsciiPrint(
+        "PciCfgMem - Dump the PCI configuration space memory.\n"    \
+        "Built: " __TIME__ " " __DATE__ "\n"                        \
+        "https://github.com/timotheuslin\n\n"
     );
     DumpPci();
     return 0;
