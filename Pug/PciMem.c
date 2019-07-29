@@ -1,21 +1,63 @@
 /** @file
 
-Dump the PCI Configuration Space
+Dump the PCI Configuration Space of all PCI devices.
+
+
+This is a demonstration source file using PUG.
+Timothy Lin Jul/29/2019, BSD 3-Clause License.
 
 **/
-#include <Uefi.h>
-#include <Library/UefiLib.h>
-#include <Library/ShellCEntryLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/BaseLib.h>
 
 
-#include <Include/Protocol/ComponentName2.h>
-#include <Include/Protocol/PciRootBridgeIo.h>
-#include <Include/Protocol/PciIo.h>
+/*--PUG--INF--
+[Defines]
+    VERSION_STRING = 0.1
+    BASE_NAME      = PciMem
+    INF_VERSION    = 0x00010006
+    ENTRY_POINT    = ShellCEntryLib
+    MODULE_TYPE    = UEFI_APPLICATION
+    FILE_GUID      = B532FD24-BA45-47E5-8C7D-1F3456DCF5B4
+
+[Sources]
+    PciMem.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    ShellPkg/ShellPkg.dec
+
+[Protocols]
+    gEfiPciIoProtocolGuid
+
+[LibraryClasses]
+    MdePkg/Library/BaseLib/BaseLib.inf
+    MdePkg/Library/UefiLib/UefiLib.inf
+    MdePkg/Library/BasePrintLib/BasePrintLib.inf
+    MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+    MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+    MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
+    ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf
+    MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+    MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
+    MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+    MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.in
+    MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf
+*/
+
+
+#include <Library/BaseLib.h>                        // MdePkg/Library/BaseLib/BaseLib.inf
+#include <Library/UefiLib.h>                        // MdePkg/Library/UefiLib/UefiLib.inf
+                                                    // MdePkg/Library/BasePrintLib/BasePrintLib.inf
+                                                    // MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf
+                                                    // MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
+                                                    // MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+#include <Library/BaseMemoryLib.h>                  // MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
+#include <Library/ShellCEntryLib.h>                 // ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf
+                                                    // MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+#include <Library/MemoryAllocationLib.h>            // MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+#include <Library/UefiBootServicesTableLib.h>       // MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
+#include <Library/UefiRuntimeServicesTableLib.h>    // MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
+#include <Include/Protocol/PciIo.h>                 // gEfiPciIoProtocolGuid
+
 
 
 VOID FreeHandleBuffer(EFI_HANDLE **h)
@@ -30,11 +72,13 @@ VOID FreeHandleBuffer(EFI_HANDLE **h)
 UINT8* PciRead256(EFI_PCI_IO_PROTOCOL *PciIo, UINT8 *buffer)
 {
     int i;
+
     for (i=0; i<256; i++) {
         PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, i, 1, buffer+i);
     }
     return buffer;
 }
+
 
 void HexDump(UINT8 *buffer, int len)
 {
@@ -48,20 +92,13 @@ void HexDump(UINT8 *buffer, int len)
     }
 }
 
-void DumpPPB(UINT8 *cfg){
-    Print(L"BAR0: %08X\n", *(UINT32*)(cfg+0x10));
-    Print(L"BAR1: %08X\n", *(UINT32*)(cfg+0x14));
-    Print(L"Pri/Sec/Sub BUS: %02x/%02X/%02X\n", *(cfg+0x18), *(cfg+0x19), *(cfg+0x1a));
-    Print(L"I/O Base : %02X00\n", *(UINT16*)(cfg+0x1c));
-    Print(L"I/O LImit: %02XFF\n", *(UINT16*)(cfg+0x1c));
-}
 
 void DumpPci(void)
 {
-    EFI_STATUS Status = EFI_NOT_FOUND;
+    int i;
     UINTN HandleCount = 0;
     EFI_HANDLE *HandleBuffer = NULL;
-    int i;
+    EFI_STATUS Status = EFI_NOT_FOUND;
 
     Status = gBS->LocateHandleBuffer(ByProtocol, &gEfiPciIoProtocolGuid, NULL, &HandleCount, &HandleBuffer);
     if (EFI_ERROR(Status)) {
@@ -69,29 +106,28 @@ void DumpPci(void)
         FreeHandleBuffer(&HandleBuffer);
         return;
     }
-    Print (L"PCI IO Handle count: %d\n", HandleCount);
+    Print(L"PCI IO Handle count: %d\n", HandleCount);
     for (i=0; i<HandleCount; i++) {
-        EFI_PCI_IO_PROTOCOL *PciIo;
-        UINTN Seg, Bus, Dev, Func;
         UINT32 VidDid;
         UINT8 Cfg[256];
         UINT16 *ClassName=L"";
+        UINTN Seg, Bus, Dev, Func;
+        EFI_PCI_IO_PROTOCOL *PciIo;
 
         Status = gBS->HandleProtocol(HandleBuffer[i], &gEfiPciIoProtocolGuid, (void**)&PciIo);
-	    if (EFI_ERROR (Status)) {
+	    if (EFI_ERROR(Status)) {
             Print(L"Handle: %X, Status: %r\n", HandleBuffer[i], Status);
 	        continue;
 	    }
-        PciIo->GetLocation (PciIo, &Seg, &Bus, &Dev, &Func);
-        PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0, 1, &VidDid);
+        PciIo->GetLocation(PciIo, &Seg, &Bus, &Dev, &Func);
+        PciIo->Pci.Read(PciIo, EfiPciIoWidthUint32, 0, 1, &VidDid);
         Print(L"%X:%02X.%02X.%X - ", Seg, Bus, Dev, Func);
-        If (VidDid == 0xFFFFFFFF) {
+        if (VidDid == 0xFFFFFFFF) {
             Print(L"FFFF:FFFF\n");
-            continue
+            continue;
         }
         PciRead256(PciIo, Cfg);
 
-        //Dump256(Cfg);
         Print(L"%04X:%04X - ", *(UINT16*)(Cfg), *(UINT16*)(Cfg+2));
         if (Cfg[0xB] == 6) {
             if (Cfg[0xA] == 4) {
@@ -108,16 +144,19 @@ void DumpPci(void)
         HexDump(Cfg, 0x40);
         Print(L"\n");
     }
-
+    FreeHandleBuffer(&HandleBuffer);
 }
 
-INTN
-EFIAPI
-ShellAppMain (
+
+INTN EFIAPI ShellAppMain(
     IN UINTN Argc,
-    IN CHAR16 **Argv
-)
+    IN CHAR16 **Argv)
 {
+    Print(
+        L"PciCfgMem - Dump the PCI configuration space memory. "    \
+        __TIME__ " " __DATE__ "\n"                                  \
+        L"  https://github.com/timotheuslin\n\n"
+    );
     DumpPci();
     return 0;
 }

@@ -466,10 +466,10 @@ PciMem_INF = {
     "update" : True,
     "Defines" : {
         "VERSION_STRING": "0.1",
-        "INF_VERSION":    "0x00010006",
         "BASE_NAME":      "PciMem",
-        "MODULE_TYPE":    "UEFI_APPLICATION",
+        "INF_VERSION":    "0x00010006",
         "ENTRY_POINT":    "ShellCEntryLib",
+        "MODULE_TYPE":    "UEFI_APPLICATION",
         "FILE_GUID":      "B532FD24-BA45-47E5-8C7D-1F3456DCF5B4",
     },
     "Sources" : [
@@ -481,29 +481,27 @@ PciMem_INF = {
     ],
     "Protocols" : [
         "gEfiPciIoProtocolGuid",
-        "gEfiComponentName2ProtocolGuid",
-        "gEfiPciRootBridgeIoProtocolGuid"
     ],
     "LibraryClasses" : [
-        ["PcdLib", "MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf",],
         ["BaseLib", "MdePkg/Library/BaseLib/BaseLib.inf",],
         ["UefiLib", "MdePkg/Library/UefiLib/UefiLib.inf",],
-        ["DebugLib", "MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf",],
         ["PrintLib", "MdePkg/Library/BasePrintLib/BasePrintLib.inf",],
+        ["PcdLib", "MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf",],
+        ["DebugLib", "MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf",],
         ["BaseMemoryLib", "MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf",],
-        ["DevicePathLib", "MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf",],
         ["ShellCEntryLib", "ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf",],
         ["MemoryAllocationLib", "MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf",],
         ["UefiBootServicesTableLib", "MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf",],
         ["UefiApplicationEntryPoint", "MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf",],
         ["UefiRuntimeServicesTableLib", "MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf"],
+        ["DevicePathLib", "MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf",],
     ],
 }
 
 
 COMPONENTS = [
 #    ResetVector_INF,
-    I2CProtocols_INF,
+#    I2CProtocols_INF,
     PciMem_INF,
 #    Platform_INF,
 #    IpSecConfig_INF,

@@ -13,13 +13,13 @@
 ░░        ░░░ ░ ░ ░ ░   ░
             ░           ░
 
-PUG: "Pug, the UEFI Guidedog", or "the Programmer's UEFI Guide".
-A front-end to build the UEFI driver(s) from a sandbox package.
+PUG: "Pug, the UDK Guidedog", or "the Programmer's UDK Guide".
+A front-end to build the UEFI driver(s) with only .C source files and a .PY as the config file.
 
 Timothy Lin Jan/30/2019, BSD 3-Clause License.
 
 Prerequisites:
-1. Python 2.7 or Python 3.x
+1. Python 2.7.x or Python 3.7.x
 2. git 2.17.x
 
 Generic prerequisites for the UDK build:
@@ -29,16 +29,17 @@ Generic prerequisites for the UDK build:
 2. iasl (version 2018xxxx or later)
 3. GCC(Posix) or MSVC(Windows)
 4. build-essential uuid-dev (Posix)
-5. pip2 install future
+5. pip2 install future (Python 2.7.x)
 6. motc (Xcode)
 
 Installation hints for any Debian Based Linux:
 1. sudo apt update & sudo apt install nasm iasl build-essential uuid-dev
 
 TODO:
-1. keyword list of the supported section names of DSC and INF.
-2. X64/IA32/ARM/... section differentiation.
-3. automate the tool-chain for Windows/Linux/Mac.
+- The driver's specific settings can reside in its major .C file for self-contained purpose. -- i.e. relocate them from config.py
+- keyword list of the supported section names of DSC and INF.
+- X64/IA32/ARM/... section differentiation.
+- automate the tool-chain for Windows/Linux/Mac.
 
 """
 
@@ -463,10 +464,10 @@ def build():
 
 if __name__ == '__main__':
     start_time = time.time()
-    r = build()
+    ret = build()
     elapsed_time = time.gmtime(int(round(time.time() - start_time)))
-    elapsed_time_str = time.strftime("%H:%M:%S", elapsed_time) 
+    elapsed_time_str = time.strftime("%H:%M:%S", elapsed_time)
     if elapsed_time.tm_yday > 1:
         elapsed_time_str += ", %d day(s)" % (elapsed_time.tm_yday - 1)
     print("\nPug's running elapsed time: %s" % elapsed_time_str)
-    sys.exit(r)
+    sys.exit(ret)
