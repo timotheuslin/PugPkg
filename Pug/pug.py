@@ -359,7 +359,7 @@ def platform_dsc(platform, components, workspace):
     print("PLATFORM_DSC = %s" % dsc_path)
     if not platform.get("update", False):
         return
-    sections = ["Defines", "Components"]
+    sections = ["Defines", "Components", "BuildOptions"]
     overrides = {"LibraryClasses", "PcdsFixedAtBuild"} #, "BuildOptions"}
     pfile = []
     for s in sections:
@@ -464,6 +464,7 @@ def build():
 
 if __name__ == '__main__':
     start_time = time.time()
+    #os.environ['GCC5_AARCH64_PREFIX']=os.path.expanduser('~') + '/toolchain/gcc-arm-8.2-2019.01-x86_64-aarch64-elf/bin/aarch64-elf-'
     ret = build()
     elapsed_time = time.gmtime(int(round(time.time() - start_time)))
     elapsed_time_str = time.strftime("%H:%M:%S", elapsed_time)

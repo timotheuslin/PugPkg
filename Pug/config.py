@@ -29,6 +29,10 @@ edk2_repos = [
     'UDK2018',
     'tags/edk2-stable201808',
     'tags/edk2-stable201811',
+    'tags/edk2-stable201903',
+    'tags/edk2-stable201905',
+    'tags/edk2-stable201908',
+    'tags/edk2-stable201911',
     'master',
 ]
 
@@ -58,7 +62,7 @@ CODETREE = {
         "path"          : os.path.abspath(WORKSPACE["path"]) + '/edk2',
         "source"        : {
             "url"       : "https://github.com/tianocore/edk2.git",
-            "signature" : "edk2-stable201903",
+            "signature" : "edk2-stable201911",
         },
         "multiworkspace": True
     }
@@ -78,7 +82,15 @@ CODETREE.update({
             "signature" : "496d36e37cc30640b93a87028824906633a4995f",
         },
         "multiworkspace": True
-    }
+    },
+    "pciutils"    : {
+        "path"          : os.path.abspath(WORKSPACE["path"]) + '/PciUtilsPkg/pciutils',
+        "source"        : {
+            "url"       : "https://github.com/pciutils/pciutils.git",
+            "signature" : "v3.6.2",
+        },
+        "multiworkspace": True
+    },
 })
 
 #
@@ -97,8 +109,12 @@ PLATFORM = {
         "DSC_SPECIFICATION"         : "0x00010006",
         "SUPPORTED_ARCHITECTURES"   : "IA32|X64|ARM|AARCH64",
     },
+    "BuildOptions"                  : {
+        "GCC:*_*_*_CC_FLAGS"        : "-ffreestanding -fno-hosted -fno-builtin",
+    },
 }
 
+WORKSPACE["target"] = "DEBUG"
 
 # Conf/target.txt
 # Ref. BaseTools/Conf/target.template
@@ -488,7 +504,7 @@ PciMem_INF = {
         ["PrintLib", "MdePkg/Library/BasePrintLib/BasePrintLib.inf",],
         ["PcdLib", "MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf",],
         ["DebugLib", "MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf",],
-        ["BaseMemoryLib", "MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf",],
+        ["BaseMemoryLib", "MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf",],
         ["ShellCEntryLib", "ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf",],
         ["MemoryAllocationLib", "MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf",],
         ["UefiBootServicesTableLib", "MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf",],
@@ -502,7 +518,7 @@ PciMem_INF = {
 COMPONENTS = [
 #    ResetVector_INF,
 #    I2CProtocols_INF,
-    PciMem_INF,
+     PciMem_INF,
 #    Platform_INF,
 #    IpSecConfig_INF,
 #    Shell_INF,
