@@ -515,10 +515,50 @@ PciMem_INF = {
 }
 
 
+UsbDiskIo_INF = {
+    "path" : WORKSPACE["tmp_dir"] + "/UsbDiskIo.inf",
+    "update" : True,
+    "Defines" : {
+        "VERSION_STRING": "0.1",
+        "BASE_NAME":      "UsbDiskIo",
+        "INF_VERSION":    "0x00010006",
+        "ENTRY_POINT":    "ShellCEntryLib",
+        "MODULE_TYPE":    "UEFI_APPLICATION",
+        "FILE_GUID":      "13ADEDF5-EA5D-4ADE-BA4D-263B0645ECF2",
+    },
+    "Sources" : [
+        os.path.basename(os.getcwd()) + "/UsbDiskIo.c"
+    ],
+    "Packages" : [
+        "MdePkg/MdePkg.dec",
+        "ShellPkg/ShellPkg.dec",
+    ],
+    "Protocols" : [
+        "gEfiUsbIoProtocolGuid",
+        "gEfiDiskIoProtocolGuid",
+        "gEfiBlockIoProtocolGuid",
+    ],
+    "LibraryClasses" : [
+        ["BaseLib", "MdePkg/Library/BaseLib/BaseLib.inf",],
+        ["UefiLib", "MdePkg/Library/UefiLib/UefiLib.inf",],
+        ["PrintLib", "MdePkg/Library/BasePrintLib/BasePrintLib.inf",],
+        ["PcdLib", "MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf",],
+        ["DebugLib", "MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf",],
+        ["BaseMemoryLib", "MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf",],
+        ["ShellCEntryLib", "ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.inf",],
+        ["MemoryAllocationLib", "MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf",],
+        ["UefiBootServicesTableLib", "MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf",],
+        ["UefiApplicationEntryPoint", "MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf",],
+        ["UefiRuntimeServicesTableLib", "MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf"],
+        ["DevicePathLib", "MdePkg/Library/UefiDevicePathLibDevicePathProtocol/UefiDevicePathLibDevicePathProtocol.inf",],
+    ],
+}
+
 COMPONENTS = [
+     UsbDiskIo_INF,
 #    ResetVector_INF,
 #    I2CProtocols_INF,
-     PciMem_INF,
+#     PciMem_INF,
 #    Platform_INF,
 #    IpSecConfig_INF,
 #    Shell_INF,
