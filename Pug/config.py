@@ -62,7 +62,7 @@ CODETREE = {
         "path"          : os.path.abspath(WORKSPACE["path"]) + '/edk2',
         "source"        : {
             "url"       : "https://github.com/tianocore/edk2.git",
-            "signature" : "edk2-stable201911",
+            "signature" : "edk2-stable201903",
         },
         "multiworkspace": True
     }
@@ -75,14 +75,14 @@ CODETREE.update({
             "signature" : "OpenSSL_1_1_0j",
         },
     },
-    "EdkiiShellTool"    : {
-        "path"          : os.path.abspath(WORKSPACE["path"]) + '/jyao',
-        "source"        : {
-            "url"       : "https://github.com/timotheuslin/EdkiiShellTool",
-            "signature" : "496d36e37cc30640b93a87028824906633a4995f",
-        },
-        "multiworkspace": True
-    },
+    #"EdkiiShellTool"    : {
+    #    "path"          : os.path.abspath(WORKSPACE["path"]) + '/jyao',
+    #    "source"        : {
+    #        "url"       : "https://github.com/timotheuslin/EdkiiShellTool",
+    #        "signature" : "496d36e37cc30640b93a87028824906633a4995f",
+    #    },
+    #    "multiworkspace": True
+    #},
     "pciutils"    : {
         "path"          : os.path.abspath(WORKSPACE["path"]) + '/PciUtilsPkg/pciutils',
         "source"        : {
